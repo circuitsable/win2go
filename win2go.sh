@@ -209,7 +209,14 @@ echo "Settling partition table..."
 sudo udevadm settle
 sleep 2
 
+echo "Unmount drive and kill processes accessing it..."
 sudo umount -l "${DRIVE}"* 2>/dev/null || true
+sudo fuser -kvm "$DRIVE" >/dev/null 2>&1 || true
+sudo umount -l "${DRIVE}"* 2>/dev/null || true
+
+echo "Settling partition table... again..."
+sudo udevadm settle
+sleep 2
 
 run_with_spinner "sudo mkfs.vfat -F32 ${DRIVE}1" #may fail if not writing to a usb block device, should be ${DRIVE}p1
 run_with_spinner "sudo mkfs.ntfs -f ${DRIVE}2"
