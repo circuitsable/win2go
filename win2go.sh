@@ -218,14 +218,23 @@ echo "Settling partition table... again..."
 sudo udevadm settle
 sleep 2
 
-run_with_spinner "sudo mkfs.vfat -F32 ${DRIVE}1" #may fail if not writing to a usb block device, should be ${DRIVE}p1
-run_with_spinner "sudo mkfs.ntfs -f ${DRIVE}2"
+# Logic to support non-USB block devices
+PART1="${DRIVE}1"
+PART2="${DRIVE}2"
+
+if [ ! -b "$PART1" ]; then
+    PART1="${DRIVE}p1"
+    PART2="${DRIVE}p2"
+fi
+
+run_with_spinner "sudo mkfs.vfat -F32 $PART1"
+run_with_spinner "sudo mkfs.ntfs -f $PART2"
 
 # Mount partitions
 sudo mkdir -p /mnt/win /mnt/boot /mnt/iso
-sudo mount "${DRIVE}2" /mnt/win
-sudo mount "${DRIVE}1" /mnt/boot
-sudo mount -o loop "$ISO_FILE" /mnt/iso
+sudo mount "$PART2" /mnt/win
+sudo mount "$PART1" /mnt/boot
+sudo mount -t iso9660,udf -o loop,ro "$ISO_FILE" /mnt/iso
 
 # =======================
 # Step 4: Extract WIM to temp
